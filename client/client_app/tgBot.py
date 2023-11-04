@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 from os import getenv
+from help_tools import helping_methods
 from typing import Any, Dict
 
 from aiogram import Bot, Dispatcher, F, Router, html
@@ -16,8 +17,9 @@ from aiogram.types import (
     ReplyKeyboardRemove,
 )
 
-sys.path(0, "/home/utyfull/Desktop/projects/tgBotWithApi/client/serverConnect")
+sys.path.insert(0, '/home/utyfull/Desktop/projects/tgBotWithApi/client/serverConnect')
 from dbConnect import connect_to_Server
+
 TOKEN = getenv("BOT_TOKEN")
 
 form_router = Router()
@@ -27,30 +29,18 @@ class Form(StatesGroup):
     start_key = State()
     valid_key = State()
     invalid_key = State()
+    valid_team = State()
     input_team = State()
+    valid_team = State()
 
 
 @form_router.message(CommandStart())
 async def command_start(message: Message, state: FSMContext) -> None:
     await state.set_state(Form.start_key)
+    com_list = [KeyboardButton=(text="Write key"), KeyboardButton=(text="Generate key")]
     await message.answer(
         "Hi there! Write your key or generate it.",
-        reply_markup=ReplyKeyboardMarkup(),
-    )
-
-
-@form_router.message(Command("cancel"))
-@form_router.message(F.text.casefold() == "cancel")
-async def cancel_handler(message: Message, state: FSMContext) -> None:
-    current_state = await state.get_state()
-    if current_state is None:
-        return
-
-    logging.info("Cancelling state %r", current_state)
-    await state.clear()
-    await message.answer(
-        "Cancelled.",
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=ReplyKeyboardMarkup()
     )
 
 
@@ -60,8 +50,8 @@ async def check_key(message: Message, state: FSMContext) -> None:
     if connect_to_Server.check_key(message.Text) == "YES":
         await state.set_state(Form.valid_key)
         await message.reply(
-            "Cool, the next step is write people you want to send notifications. Please, write users with this format -> (@abc@wfs)",
-            reply_markup=ReplyKeyboardRemove(),
+            "Cool, the next step is write people you want to send notifications. Please, write users or use last team",
+            reply_markup=ReplyKeyboardRemove()
         )
     else:
         await state.set_state(Form.invalid_key)
@@ -76,57 +66,50 @@ async def check_key(message: Message, state: FSMContext) -> None:
     await state.set_state(Form.start_key)
     await message.answer(
         "Write your key again!",
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=ReplyKeyboardRemove()
     )
 
 
 @form_router.message(Form.start_key, Form.invalid_key, F.text.casefold() == "")
 async def gen_key(message: Message, state: FSMContext) -> None:
     await state.set_state(Form.valid_key)
+    key = helping_methods.new_key()
     await message.answer(
         f"Your key is {key}\n Please remember it.\n 
-        The next step is write people you want to send notifications. Please, write users with this format -> (@abc@wfs)"
+        The next step is write people you want to send notifications. Please, write users or use last team",
+        reply_markup=ReplyKeyboardMarkup()
     )
 
 
-@form_router.message(Form.valid_key)
+@form_router.message(Form.valid_key, F.text.cesefold() == "Write users")
 async def choose_team(message: Message, state: FSMContext) -> None:
     await state.set_state(Form.input_team)
-    team = message.Text
     await message.reply(
-        "",
-        reply_markup=ReplyKeyboardRemove(),
+        "Please, write users with this format -> (@abc@wfs)",
+        reply_markup=ReplyKeyboardRemove()
     )
 
-
-@form_router.message(Form.like_bots)
-async def process_unknown_write_bots(message: Message) -> None:
-    await message.reply("I don't understand you :(")
-
-
-@form_router.message(Form.language)
-async def process_language(message: Message, state: FSMContext) -> None:
-    data = await state.update_data(language=message.text)
-    await state.clear()
-
-    if message.text.casefold() == "python":
+@form_router.message(Form.input_team)
+async def check_team(message: Message, state: FSMContext) -> None:
+    team = message.Text
+    if helping_methods.check_team_valid(team) == "VALID":
+        await state.set_state(Form.valid_team)
         await message.reply(
-            "Python, you say? That's the language that makes my circuits light up! 😉"
+            "Your team is valid, the next step is write message"
+        )
+    else:
+        await state.set_state(Form.valid_key)
+        await message.reply(
+            "Team format is invalid! Try again",
+            reply_markup=ReplyKeyboardRemove
         )
 
-    await show_summary(message=message, data=data)
-
-
-async def show_summary(message: Message, data: Dict[str, Any], positive: bool = True) -> None:
-    name = data["name"]
-    language = data.get("language", "<something unexpected>")
-    text = f"I'll keep in mind that, {html.quote(name)}, "
-    text += (
-        f"you like to write bots with {html.quote(language)}."
-        if positive
-        else "you don't like to write bots, so sad..."
+@form_router.message(Form.valid_team)
+async def send_notif(message: Message, state: FSMContext) -> None:
+    user_message = message.Text
+    await message.reply(
+        "Notifications have been sent. See you later!!!"
     )
-    await message.answer(text=text, reply_markup=ReplyKeyboardRemove())
 
 
 async def main():

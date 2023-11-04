@@ -7,14 +7,8 @@ import sys
 class connect_to_Server(object):
 
 
-    def __init__(self, key, users_list, name):
-        self.key = key
-        self.users_list = users_list
-        self.name = name
-
-
     @staticmethod
-    def get_eng():
+    def __get_eng():
         sys.path.insert(0, '/home/utyfull/Desktop/projects/tgBotWithApi/server')
         from server import Base, id_table, data_table
         engine = create_engine("postgresql+psycopg2://utyfull:1215010q@localhost:5431/main")
@@ -27,7 +21,7 @@ class connect_to_Server(object):
 
     @classmethod
     def check_key(cls, user_key):
-        session, id_table, data_table = connect_to_Server.get_eng()
+        session, id_table, data_table = connect_to_Server.__get_eng()
         user_key_select = session.execute(select(id_table).where(id_table.key == user_key))
         check_key = None
         for row in user_key_select:
@@ -40,7 +34,7 @@ class connect_to_Server(object):
 
     @classmethod
     def create_user(cls, new_key, new_name):
-        session, id_table, data_table = connect_to_Server.get_eng()
+        session, id_table, data_table = connect_to_Server.__get_eng()
         new_user_id = id_table(key = new_key, name = new_name)
         new_user_key = data_table(key = new_key, users_list='abc@')
         new_user_id.children.append(new_user_key)
@@ -50,7 +44,7 @@ class connect_to_Server(object):
 
     @classmethod
     def update_team(cls, user_team, user_key):
-        session, id_table, data_table = connect_to_Server.get_eng()
+        session, id_table, data_table = connect_to_Server.__get_eng()
         upd_team = update(data_table).where(data_table.key == user_key).values(users_list = user_team)
         session.execute(upd_team)
         session.commit()
@@ -58,7 +52,7 @@ class connect_to_Server(object):
     
     @classmethod
     def get_team(cls, user_key):
-        session, id_table, data_table = connect_to_Server.get_eng()
+        session, id_table, data_table = connect_to_Server.__get_eng()
         team = session.execute(select(data_table).order_by(data_table.users_list).where(data_table.key == user_key))
         for row in team:
             return(str(row.data_table.users_list))

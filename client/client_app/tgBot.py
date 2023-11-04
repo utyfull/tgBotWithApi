@@ -16,6 +16,8 @@ from aiogram.types import (
     ReplyKeyboardRemove,
 )
 
+sys.path(0, "/home/utyfull/Desktop/projects/tgBotWithApi/client/serverConnect")
+from dbConnect import connect_to_Server
 TOKEN = getenv("BOT_TOKEN")
 
 form_router = Router()
@@ -31,7 +33,7 @@ async def command_start(message: Message, state: FSMContext) -> None:
     await state.set_state(Form.start_key)
     await message.answer(
         "Hi there! Write your key or generate it.",
-        reply_markup=ReplyKeyboardMarkup(///),
+        reply_markup=ReplyKeyboardMarkup(),
     )
 
 
@@ -53,8 +55,13 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
 @form_router.message(Form.start_key)
 async def check_key(message: Message, state: FSMContext) -> None:
     await state.update_data(key=message.text)
-    
-    await state.set_state(Form.valid_key)
+    if connect_to_Server.check_key(message.Text) == "YES":
+        await state.set_state(Form.valid_key)
+        await message.reply(
+            "Cool, the next step is write people you want to send notifications. Please, write users with this format -> (@abc@wfs)",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+    else:
 
 
 @form_router.message(Form.like_bots, F.text.casefold() == "no")

@@ -26,6 +26,8 @@ form_router = Router()
 class Form(StatesGroup):
     start_key = State()
     valid_key = State()
+    invalid_key = State()
+    input_team = State()
 
 
 @form_router.message(CommandStart())
@@ -62,25 +64,37 @@ async def check_key(message: Message, state: FSMContext) -> None:
             reply_markup=ReplyKeyboardRemove(),
         )
     else:
+        await state.set_state(Form.invalid_key)
+        await message.reply(
+            "You've wrote wrong key! Try again or generate new key.",
+            reply_markup=ReplyKeyboardMarkup()
+        )
 
 
-@form_router.message(Form.like_bots, F.text.casefold() == "no")
-async def process_dont_like_write_bots(message: Message, state: FSMContext) -> None:
-    data = await state.get_data()
-    await state.clear()
+@form_router.message(Form.invalid_key, F.text.casefold() == "")
+async def check_key(message: Message, state: FSMContext) -> None:
+    await state.set_state(Form.start_key)
     await message.answer(
-        "Not bad not terrible.\nSee you soon.",
+        "Write your key again!",
         reply_markup=ReplyKeyboardRemove(),
     )
-    await show_summary(message=message, data=data, positive=False)
 
 
-@form_router.message(Form.like_bots, F.text.casefold() == "yes")
-async def process_like_write_bots(message: Message, state: FSMContext) -> None:
-    await state.set_state(Form.language)
+@form_router.message(Form.start_key, Form.invalid_key, F.text.casefold() == "")
+async def gen_key(message: Message, state: FSMContext) -> None:
+    await state.set_state(Form.valid_key)
+    await message.answer(
+        f"Your key is {key}\n Please remember it.\n 
+        The next step is write people you want to send notifications. Please, write users with this format -> (@abc@wfs)"
+    )
 
+
+@form_router.message(Form.valid_key)
+async def choose_team(message: Message, state: FSMContext) -> None:
+    await state.set_state(Form.input_team)
+    team = message.Text
     await message.reply(
-        "Cool! I'm too!\nWhat programming language did you use for it?",
+        "",
         reply_markup=ReplyKeyboardRemove(),
     )
 

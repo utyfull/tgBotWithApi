@@ -26,7 +26,7 @@ class id_table(Base):
     __tablename__ = "id_table"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    key: Mapped[int] = mapped_column()
+    key: Mapped[str] = mapped_column()
     name: Mapped[str] = mapped_column()
     children: Mapped[List[data_table]] = relationship(
         secondary=association_table, back_populates="parents"
@@ -41,7 +41,7 @@ class data_table(Base):
     __tablename__ = "data_table"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    key: Mapped[int] = mapped_column()
+    key: Mapped[str] = mapped_column()
     users_list: Mapped[str] = mapped_column()
     parents: Mapped[List[id_table]] = relationship(
         secondary=association_table, back_populates="children"

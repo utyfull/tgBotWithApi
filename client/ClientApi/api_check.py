@@ -43,7 +43,7 @@ def main():
         }
         event = service.events().insert(calendarId="primary", sendNotifications=True, body=event, conferenceDataVersion=1).execute()
         print(event)
-    except Exception:
+    except HttpError:
         pass
 
 if __name__ == "__main__":

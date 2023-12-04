@@ -2,7 +2,6 @@ import sys
 from itertools import product
 from random import randrange
 
-sys.path.insert(0, "/home/utyfull/Desktop/projects/tgBotWithApi/client/serverConnect")
 from dbConnect import connect_to_Server
 
 
@@ -17,6 +16,7 @@ class helping_methods:
         else:
             return key
 
-    def check_team_valid(self, team):
-        pass
+    def to_norm_data(date):
+        data = date.split(', ')
+        
 

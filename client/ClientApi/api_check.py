@@ -12,7 +12,7 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 def main():
-    time = '2023-11-06T16:34:00-17:34'
+    time = '2023-11-05T22:39:00-21:00'
     creds = None
     if os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
@@ -42,9 +42,9 @@ def main():
             }
         }
         event = service.events().insert(calendarId="primary", sendNotifications=True, body=event, conferenceDataVersion=1).execute()
-        print(event)
-    except HttpError:
-        pass
+        print(event['hangoutLink'])
+    except HttpError as error:
+        print(error)
 
 if __name__ == "__main__":
     main()
